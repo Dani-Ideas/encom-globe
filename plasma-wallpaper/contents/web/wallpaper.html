@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; background: #000; overflow: hidden; }
+        canvas { display: block; }
+    </style>
+    <script src="data.js"></script>
+    <script src="grid.js"></script>
+    <script src="encom-globe.js"></script>
+</head>
+<body>
+<script>
+    var globe = new ENCOM.Globe(window.innerWidth, window.innerHeight, {
+        font: "monospace",
+        data: data.slice(),
+        tiles: grid.tiles,
+        scale: 1.0,
+        dayLength: 28000,
+        introLinesDuration: 2000,
+        maxPins: 500,
+        maxMarkers: 4
+    });
+
+    document.body.appendChild(globe.domElement);
+
+    globe.init(function() {
+        function animate() {
+            globe.tick();
+            requestAnimationFrame(animate);
+        }
+        animate();
+    });
+
+    window.addEventListener('resize', function() {
+        globe.camera.aspect = window.innerWidth / window.innerHeight;
+        globe.camera.updateProjectionMatrix();
+        globe.renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+</script>
+</body>
+</html>

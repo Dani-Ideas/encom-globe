@@ -1,0 +1,11 @@
+{
+    "KPlugin": {
+        "Authors": [{"Email": "daniideas0@gmail.com", "Name": "dani-ideas"}],
+        "Description": "Encom Globe - Animated WebGL globe from Tron: Legacy",
+        "Id": "com.daniideas.encomglobe",
+        "Name": "Encom Globe",
+        "Version": "1.0",
+        "Website": "https://github.com/dani-ideas/encom-globe"
+    },
+    "KPackageStructure": "Plasma/Wallpaper"
+}

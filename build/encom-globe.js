@@ -47126,16 +47126,21 @@ void main() {
     var THREE = /* @__PURE__ */ requireThree();
     requireUtils();
     var vertexShader = [
+      "#version 300 es",
+      "precision highp float;",
       "#define PI 3.141592653589793238462643",
       "#define DISTANCE 500.0",
-      "attribute float myStartTime;",
-      "attribute float myStartLat;",
-      "attribute float myStartLon;",
-      "attribute float altitude;",
-      "attribute float active;",
+      "uniform mat4 projectionMatrix;",
+      "uniform mat4 modelViewMatrix;",
       "uniform float currentTime;",
       "uniform vec3 color;",
-      "varying vec4 vColor;",
+      "in vec3 position;",
+      "in float myStartTime;",
+      "in float myStartLat;",
+      "in float myStartLon;",
+      "in float altitude;",
+      "in float active;",
+      "out vec4 vColor;",
       "",
       "vec3 getPos(float lat, float lon)",
       "{",
@@ -47171,14 +47176,17 @@ void main() {
       "}"
     ].join("\n");
     var fragmentShader = [
-      "varying vec4 vColor;",
+      "#version 300 es",
+      "precision highp float;",
+      "in vec4 vColor;",
+      "out vec4 fragColor;",
       "void main()",
       "{",
-      "   gl_FragColor = vColor;",
+      "   fragColor = vColor;",
       "   float depth = gl_FragCoord.z / gl_FragCoord.w;",
       "   float fogFactor = smoothstep(1500.0, 1800.0, depth );",
       "   vec3 fogColor = vec3(0.0);",
-      "   gl_FragColor = mix( vColor, vec4( fogColor, gl_FragColor.w), fogFactor );",
+      "   fragColor = mix( vColor, vec4( fogColor, fragColor.w), fogFactor );",
       "}"
     ].join("\n");
     var SmokeProvider = function(scene, _opts) {
@@ -47213,7 +47221,7 @@ void main() {
         currentTime: { type: "f", value: 0 },
         color: { type: "c", value: new THREE.Color("#aaa") }
       };
-      var material = new THREE.ShaderMaterial({
+      var material = new THREE.RawShaderMaterial({
         uniforms: this.uniforms,
         vertexShader,
         fragmentShader,
@@ -47290,13 +47298,19 @@ void main() {
         this.scene.remove(this.hexGrid);
       }
       var pointVertexShader = [
+        "#version 300 es",
+        "precision highp float;",
         "#define PI 3.141592653589793238462643",
         "#define DISTANCE 500.0",
         "#define INTRODURATION " + (parseFloat(this.introLinesDuration) + 1e-5),
         "#define INTROALTITUDE " + (parseFloat(this.introLinesAltitude) + 1e-5),
-        "attribute float lng;",
+        "uniform mat4 projectionMatrix;",
+        "uniform mat4 modelViewMatrix;",
         "uniform float currentTime;",
-        "varying vec4 vColor;",
+        "in vec3 position;",
+        "in vec3 color;",
+        "in float lng;",
+        "out vec4 vColor;",
         "",
         "void main()",
         "{",
@@ -47314,30 +47328,31 @@ void main() {
         "      newPos = position * (1.0 + ((INTROALTITUDE-1.0) * (1.0-(currentTime - introStart-(INTRODURATION/8.0))/200.0)));",
         "   }",
         "   vColor = vec4( color, opacityVal );",
-        //     set color associated to vertex; use later in fragment shader.
         "   gl_Position = projectionMatrix * modelViewMatrix * vec4(newPos, 1.0);",
         "}"
       ].join("\n");
       var pointFragmentShader = [
-        "varying vec4 vColor;",
+        "#version 300 es",
+        "precision highp float;",
+        "in vec4 vColor;",
+        "out vec4 fragColor;",
         "void main()",
         "{",
-        "   gl_FragColor = vColor;",
+        "   fragColor = vColor;",
         "   float depth = gl_FragCoord.z / gl_FragCoord.w;",
         "   float fogFactor = smoothstep(" + parseInt(this.cameraDistance) + ".0," + parseInt(this.cameraDistance + 300) + ".0, depth );",
         "   vec3 fogColor = vec3(0.0);",
-        "   gl_FragColor = mix( vColor, vec4( fogColor, gl_FragColor.w ), fogFactor );",
+        "   fragColor = mix( vColor, vec4( fogColor, fragColor.w ), fogFactor );",
         "}"
       ].join("\n");
       this.pointUniforms = {
         currentTime: { type: "f", value: 0 }
       };
-      var pointMaterial = new THREE.ShaderMaterial({
+      var pointMaterial = new THREE.RawShaderMaterial({
         uniforms: this.pointUniforms,
         vertexShader: pointVertexShader,
         fragmentShader: pointFragmentShader,
         transparent: true,
-        vertexColors: true,
         side: THREE.DoubleSide
       });
       var triangles = this.tiles.length * 4;
