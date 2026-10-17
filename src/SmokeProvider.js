@@ -2,7 +2,6 @@ var THREE = require('three'),
     utils = require('./utils');
 
 var vertexShader = [
-    "#version 300 es",
     "precision highp float;",
     "#define PI 3.141592653589793238462643",
     "#define DISTANCE 500.0",
@@ -10,13 +9,13 @@ var vertexShader = [
     "uniform mat4 modelViewMatrix;",
     "uniform float currentTime;",
     "uniform vec3 color;",
-    "in vec3 position;",
-    "in float myStartTime;",
-    "in float myStartLat;",
-    "in float myStartLon;",
-    "in float altitude;",
-    "in float active;",
-    "out vec4 vColor;",
+    "attribute vec3 position;",
+    "attribute float myStartTime;",
+    "attribute float myStartLat;",
+    "attribute float myStartLon;",
+    "attribute float altitude;",
+    "attribute float active;",
+    "varying vec4 vColor;",
     "",
     "vec3 getPos(float lat, float lon)",
     "{",
@@ -53,17 +52,15 @@ var vertexShader = [
 ].join("\n");
 
 var fragmentShader = [
-    "#version 300 es",
     "precision highp float;",
-    "in vec4 vColor;",
-    "out vec4 fragColor;",
+    "varying vec4 vColor;",
     "void main()",
     "{",
-    "   fragColor = vColor;",
+    "   gl_FragColor = vColor;",
     "   float depth = gl_FragCoord.z / gl_FragCoord.w;",
     "   float fogFactor = smoothstep(1500.0, 1800.0, depth );",
     "   vec3 fogColor = vec3(0.0);",
-    "   fragColor = mix( vColor, vec4( fogColor, fragColor.w), fogFactor );",
+    "   gl_FragColor = mix( vColor, vec4( fogColor, gl_FragColor.w), fogFactor );",
     "}"
 ].join("\n");
 

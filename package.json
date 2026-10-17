@@ -12,7 +12,8 @@
     "build": "vite build && vite build --config vite.min.config.js",
     "dev": "vite build --watch",
     "buildgrid": "node bin/buildgrid -r 500 -o grid.js -m resources/equirectangle_projection.png",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "buildgrid:particles": "node bin/buildgrid -r 500 -d 70 -m resources/equirectangle_projection.png -o grid-particles.js"
   },
   "repository": {
     "type": "git",
@@ -21,10 +22,11 @@
   "author": "robscanlon@gmail.com",
   "license": "MIT",
   "dependencies": {
+    "@tweenjs/tween.js": "^25.0.0",
     "hexasphere.js": "*",
+    "motion": "^14.3.0",
     "quadtree2": "~0.5.3",
-    "vec2": "~1.5.0",
     "three": "^0.184.0",
-    "@tweenjs/tween.js": "^25.0.0"
+    "vec2": "~1.5.0"
   }
 }

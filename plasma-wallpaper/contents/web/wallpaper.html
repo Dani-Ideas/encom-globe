@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        html, body { width: 100%; height: 100%; background: #000; overflow: hidden; }
+        html, body { width: 100%; height: 100%; background: #0b0636; overflow: hidden; }
         canvas { display: block; }
     </style>
     <script src="data.js"></script>
@@ -13,16 +13,18 @@
 </head>
 <body>
 <script>
-    var globe = new ENCOM.Globe(window.innerWidth, window.innerHeight, {
-        font: "monospace",
-        data: data.slice(),
-        tiles: grid.tiles,
-        scale: 1.0,
-        dayLength: 28000,
-        introLinesDuration: 2000,
-        maxPins: 500,
-        maxMarkers: 4
-    });
+        var globe = new ENCOM.Globe(window.innerWidth, window.innerHeight, {
+            font: "monospace",
+            data: data.slice(),
+            tiles: grid.tiles,
+            baseColor: "#c6c7f5",
+            scale: 1.0,
+            viewAngle: 0.210,
+            dayLength: 28000,
+            introLinesDuration: 5000,
+            maxPins: 120,
+            maxMarkers: 2
+        });
 
     document.body.appendChild(globe.domElement);
 
@@ -32,6 +34,90 @@
             requestAnimationFrame(animate);
         }
         animate();
+
+        // --- Geolocalización por IP + revisión de conectividad cada hora ---
+        var _origColor  = globe.baseColor;
+        var _noNet      = false;
+        var _lastOnline = Date.now();
+
+        function _restoreColor() {
+            if (_noNet) {
+                _noNet = false;
+                globe.pointUniforms.highlightActive.value = 1.0;
+                globe.setBaseColor(_origColor);
+            }
+        }
+
+        function _applyNoInternet() {
+            if (!_noNet) {
+                _noNet = true;
+                globe.pointUniforms.highlightActive.value = 0.0;
+                globe.setComplementaryColor();
+            }
+        }
+
+        // JSONP: evita bloqueo CORS en file:// y Qt WebEngine
+        function _ipApi(cb) {
+            var fn = '_eg_' + Date.now();
+            var s  = document.createElement('script');
+            window[fn] = function(d) {
+                delete window[fn];
+                if (s.parentNode) s.parentNode.removeChild(s);
+                cb(d || null);
+            };
+            s.src = 'https://ipapi.co/json/?callback=' + fn;
+            s.onerror = function() {
+                delete window[fn];
+                if (s.parentNode) s.parentNode.removeChild(s);
+                cb(null);
+            };
+            document.head.appendChild(s);
+        }
+
+        function _checkNet() {
+            _ipApi(function(d) {
+                if (d) {
+                    _lastOnline = Date.now();
+                    _restoreColor();
+                } else if (Date.now() - _lastOnline > 3600000) {
+                    _applyNoInternet();
+                }
+            });
+        }
+
+        var _loc = null;
+        try { _loc = JSON.parse(localStorage.getItem('encom_loc')); } catch(e) {}
+        if (_loc && _loc.lat && _loc.lon) globe.addIpPin(_loc.lat, _loc.lon);
+
+        _ipApi(function(d) {
+            if (d && d.latitude && d.longitude) {
+                _lastOnline = Date.now();
+                localStorage.setItem('encom_loc', JSON.stringify({ lat: d.latitude, lon: d.longitude }));
+                globe.addIpPin(d.latitude, d.longitude);
+            }
+        });
+
+        setInterval(_checkNet, 3600000);
+        // --------------------------------------------------------------------
+
+        // Markers conectados: Vancouver → Tokyo
+        setTimeout(function() {
+            globe.addMarker(49.25,   -123.1,    "Vancouver");
+            globe.addMarker(35.6895,  139.6917, "Tokyo",     true);
+        }, 3000);
+
+        // Constelación de 6 satélites
+        setTimeout(function() {
+            var constellation = [];
+            var positions = [
+                { lat:  45, lon: -120 }, { lat:  45, lon:    0 }, { lat:  45, lon:  120 },
+                { lat: -30, lon:  -60 }, { lat: -30, lon:   60 }, { lat: -30, lon:  180 }
+            ];
+            for (var i = 0; i < positions.length; i++) {
+                constellation.push({ lat: positions[i].lat, lon: positions[i].lon, altitude: 1.4 });
+            }
+            globe.addConstellation(constellation, { coreColor: "#e31b1b", numWaves: 8 });
+        }, 5000);
     });
 
     window.addEventListener('resize', function() {

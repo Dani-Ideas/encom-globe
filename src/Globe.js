@@ -47,7 +47,6 @@ var createParticles = function(){
     }
 
     var pointVertexShader = [
-        "#version 300 es",
         "precision highp float;",
         "#define PI 3.141592653589793238462643",
         "#define DISTANCE 500.0",
@@ -56,10 +55,14 @@ var createParticles = function(){
         "uniform mat4 projectionMatrix;",
         "uniform mat4 modelViewMatrix;",
         "uniform float currentTime;",
-        "in vec3 position;",
-        "in vec3 color;",
-        "in float lng;",
-        "out vec4 vColor;",
+        "uniform float highlightLat;",
+        "uniform float highlightLon;",
+        "uniform float highlightActive;",
+        "attribute vec3 position;",
+        "attribute vec3 color;",
+        "attribute float lng;",
+        "attribute float lat;",
+        "varying vec4 vColor;",
         "",
         "void main()",
         "{",
@@ -76,29 +79,43 @@ var createParticles = function(){
         "   if(currentTime > introStart + INTRODURATION / 8.0 && currentTime < introStart + INTRODURATION / 8.0 + 200.0){",
         "      newPos = position * (1.0 + ((INTROALTITUDE-1.0) * (1.0-(currentTime - introStart-(INTRODURATION/8.0))/200.0)));",
         "   }",
-        "   vColor = vec4( color, opacityVal );",
+        "   vec3 finalColor = color;",
+        "   if (highlightActive > 0.5) {",
+        "      float dlat = lat - highlightLat;",
+        "      float dlon = lng - highlightLon;",
+        "      if (dlon > 180.0) dlon -= 360.0;",
+        "      if (dlon < -180.0) dlon += 360.0;",
+        "      float dist = sqrt(dlat*dlat + dlon*dlon);",
+        "      if (dist < 2.0) {",
+        "         float pulse = (1.0 + sin(currentTime * 0.0015)) * 0.5;",
+        "         finalColor = mix(color, vec3(1.0), pulse * 0.7);",
+        "      }",
+        "   }",
+        "   vColor = vec4( finalColor, opacityVal );",
         "   gl_Position = projectionMatrix * modelViewMatrix * vec4(newPos, 1.0);",
         "}"
     ].join("\n");
 
     var pointFragmentShader = [
-        "#version 300 es",
         "precision highp float;",
-        "in vec4 vColor;",
-        "out vec4 fragColor;",
+        "varying vec4 vColor;",
         "void main()",
         "{",
-        "   fragColor = vColor;",
+        "   gl_FragColor = vColor;",
         "   float depth = gl_FragCoord.z / gl_FragCoord.w;",
         "   float fogFactor = smoothstep(" + parseInt(this.cameraDistance) +".0," + (parseInt(this.cameraDistance+300)) +".0, depth );",
         "   vec3 fogColor = vec3(0.0);",
-        "   fragColor = mix( vColor, vec4( fogColor, fragColor.w ), fogFactor );",
+        "   gl_FragColor = mix( vColor, vec4( fogColor, gl_FragColor.w ), fogFactor );",
         "}"
     ].join("\n");
 
+    var _prev = this.pointUniforms;
     this.pointUniforms = {
-        currentTime: { type: 'f', value: 0.0}
-    }
+        currentTime:     { value: 0.0 },
+        highlightLat:    { value: _prev ? _prev.highlightLat.value    : 0.0 },
+        highlightLon:    { value: _prev ? _prev.highlightLon.value    : 0.0 },
+        highlightActive: { value: _prev ? _prev.highlightActive.value : 0.0 }
+    };
 
     var pointMaterial = new THREE.RawShaderMaterial( {
         uniforms:       this.pointUniforms,
@@ -115,8 +132,10 @@ var createParticles = function(){
     geometry.setAttribute( 'position', new THREE.BufferAttribute( new Float32Array( triangles * 9 ), 3 ) );
     geometry.setAttribute( 'color',    new THREE.BufferAttribute( new Float32Array( triangles * 9 ), 3 ) );
     geometry.setAttribute( 'lng',      new THREE.BufferAttribute( new Float32Array( triangles * 3 ), 1 ) );
+    geometry.setAttribute( 'lat',      new THREE.BufferAttribute( new Float32Array( triangles * 3 ), 1 ) );
 
     var lng_values = geometry.attributes.lng.array;
+    var lat_values = geometry.attributes.lat.array;
 
     var baseHsl = {};
     new THREE.Color(this.baseColor).getHSL(baseHsl);
@@ -145,6 +164,12 @@ var createParticles = function(){
         lng_values[p] = lng;
         lng_values[p+1] = lng;
         lng_values[p+2] = lng;
+
+        // grid.js stores latitude with the opposite sign (hexasphere's convention);
+        // flip it so the highlight matches the lat/lon passed to setHighlightLocation.
+        lat_values[p] = -lat;
+        lat_values[p+1] = -lat;
+        lat_values[p+2] = -lat;
 
         positions[ i ]     = ax;
         positions[ i + 1 ] = ay;
@@ -193,6 +218,8 @@ var createParticles = function(){
 
     this.hexGrid = new THREE.Mesh( geometry, pointMaterial );
     this.scene.add( this.hexGrid );
+
+    if (this._ipPinBase) this._ipPinBase.set(this.baseColor);
 
 };
 
@@ -611,10 +638,52 @@ Globe.prototype.tick = function(){
 
     this.smokeProvider.tick(this.totalRunTime);
 
+    // IP pin: oscila de blanco al color de la paleta
+    if (this._ipPin && this._ipPin.topSprite && this._ipPinTmp) {
+        var t = (1.0 + Math.sin(this.totalRunTime * 0.0008)) * 0.5;
+        this._ipPinTmp.copy(this._ipPinWhite).lerp(this._ipPinBase, t);
+        this._ipPin.line.material.color.copy(this._ipPinTmp);
+        this._ipPin.topSprite.material.color.copy(this._ipPinTmp);
+    }
+
     this.camera.lookAt( this.scene.position );
     this.renderer.render( this.scene, this.camera );
 
 }
+
+Globe.prototype.addIpPin = function(lat, lon) {
+    if (this._ipPin) {
+        this._ipPin.remove();
+        this._ipPin = null;
+    }
+    var pin = new Pin(lat, lon, "", 1.8, this.scene, this.smokeProvider, {
+        lineColor: "#ffffff",
+        topColor:  "#ffffff",
+        font:      this.font,
+        showLabel: false,
+        showTop:   true,
+        showSmoke: false
+    });
+    pin.topSprite.scale.set(28, 28);
+    this._ipPin      = pin;
+    this._ipPinWhite = new THREE.Color(1, 1, 1);
+    this._ipPinBase  = new THREE.Color(this.baseColor);
+    this._ipPinTmp   = new THREE.Color();
+    this.setHighlightLocation(lat, lon);
+};
+
+Globe.prototype.setHighlightLocation = function(lat, lon) {
+    this.pointUniforms.highlightLat.value    = lat;
+    this.pointUniforms.highlightLon.value    = lon;
+    this.pointUniforms.highlightActive.value = 1.0;
+};
+
+Globe.prototype.setComplementaryColor = function() {
+    var hsl = {};
+    new THREE.Color(this.baseColor).getHSL(hsl);
+    var c = new THREE.Color().setHSL((hsl.h + 0.5) % 1, hsl.s, hsl.l);
+    this.setBaseColor('#' + c.getHexString());
+};
 
 module.exports = Globe;
 

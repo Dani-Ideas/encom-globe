@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Encom Globe · Partículas</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; background: #000; overflow: hidden; }
+        canvas { display: block; cursor: grab; touch-action: none; }
+        canvas:active { cursor: grabbing; }
+        .hint {
+            position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%);
+            color: #8FD8D8; font: 13px monospace; letter-spacing: 0.1em; opacity: 0.7;
+            pointer-events: none; white-space: nowrap;
+        }
+    </style>
+    <!-- Malla más densa solo para las partículas: npm run buildgrid:particles -->
+    <script src="grid-particles.js"></script>
+    <script src="data.js"></script>
+    <script src="build/encom-globe.js"></script>
+</head>
+<body>
+<div class="hint">PASA EL MOUSE PARA ATRAER · ARRASTRA PARA GIRAR (X / Y) · SHIFT + ARRASTRAR PARA EL EJE Z</div>
+<script>
+    // ?auto=10000 cambia solo entre globo y mapa cada 10 s (útil como fondo de pantalla).
+    var auto = parseInt(new URLSearchParams(location.search).get("auto")) || 0;
+
+    var globe = new ENCOM.ParticleGlobe(window.innerWidth, window.innerHeight, {
+        tiles: grid.tiles,
+        baseColor: "#c6c7f5",
+        autoMorph: auto,
+        introDuration: 5000,
+        maxPins: 120,
+        maxMarkers: 2
+    });
+    document.body.appendChild(globe.domElement);
+
+    globe.init(function() {
+        (function animate() {
+            globe.tick();
+            requestAnimationFrame(animate);
+        })();
+
+        // Pins azules de data.js: caen cuando el barrido de la intro pasa por su longitud.
+        data.forEach(function(d) {
+            setTimeout(function() { globe.addPin(d.lat, d.lng, d.label); },
+                       500 + globe.introDuration * ((180 + d.lng) / 360));
+        });
+
+        // Marcadores amarillos con arco: Vancouver → Tokyo (como en el fondo de pantalla).
+        setTimeout(function() {
+            globe.addMarker(49.25, -123.1, "Vancouver");
+            globe.addMarker(35.6895, 139.6917, "Tokyo", true);
+        }, 3000);
+
+        // Constelación de 6 satélites.
+        setTimeout(function() {
+            globe.addConstellation([
+                { lat:  45, lon: -120, altitude: 1.4 }, { lat:  45, lon:    0, altitude: 1.4 },
+                { lat:  45, lon:  120, altitude: 1.4 }, { lat: -30, lon:  -60, altitude: 1.4 },
+                { lat: -30, lon:   60, altitude: 1.4 }, { lat: -30, lon:  180, altitude: 1.4 }
+            ], { coreColor: "#e31b1b", numWaves: 8 });
+        }, 5000);
+    });
+
+    window.addEventListener('resize', function() {
+        globe.resize(window.innerWidth, window.innerHeight);
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+<RCC>
+    <qresource prefix="/encomglobe">
+        <file alias="hex.vert.qsb">generated/hex.vert.qsb</file>
+        <file alias="hex.frag.qsb">generated/hex.frag.qsb</file>
+        <file alias="overlay.vert.qsb">generated/overlay.vert.qsb</file>
+        <file alias="overlay.frag.qsb">generated/overlay.frag.qsb</file>
+        <file alias="smoke.vert.qsb">generated/smoke.vert.qsb</file>
+        <file alias="smoke.frag.qsb">generated/smoke.frag.qsb</file>
+        <file alias="particles.vert.qsb">generated/particles.vert.qsb</file>
+        <file alias="particles.frag.qsb">generated/particles.frag.qsb</file>
+        <file alias="shell.vert.qsb">generated/shell.vert.qsb</file>
+        <file alias="shell.frag.qsb">generated/shell.frag.qsb</file>
+        <file alias="grid.bin">generated/grid.bin</file>
+        <file alias="grid-particles.bin">generated/grid-particles.bin</file>
+        <file alias="data.json">generated/data.json</file>
+    </qresource>
+</RCC>

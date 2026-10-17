@@ -1,0 +1,11 @@
+{
+    "KPlugin": {
+        "Authors": [{"Email": "daniideas0@gmail.com", "Name": "dani-ideas"}],
+        "Description": "Encom Globe - versión nativa C++/Qt (prototipo, solo malla hexagonal)",
+        "Id": "com.daniideas.encomglobe.native",
+        "Name": "Encom Globe (Nativo)",
+        "Version": "0.1",
+        "Website": "https://github.com/dani-ideas/encom-globe"
+    },
+    "KPackageStructure": "Plasma/Wallpaper"
+}

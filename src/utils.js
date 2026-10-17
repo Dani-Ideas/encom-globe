@@ -46,7 +46,8 @@ var utils = {
 
       var textWidth = context.measureText(text).width;
 
-      canvas.width = textWidth;
+      // An empty label would make a 0-wide canvas, which WebGL can't upload.
+      canvas.width = Math.max(2, textWidth);
       canvas.height = size + 10;
 
       // better if canvases have even heights

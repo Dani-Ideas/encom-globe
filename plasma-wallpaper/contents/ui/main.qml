@@ -18,7 +18,7 @@ WallpaperItem {
 
         settings.javascriptEnabled: true
         settings.localContentCanAccessFileUrls: true
-        settings.localContentCanAccessRemoteUrls: false
+        settings.localContentCanAccessRemoteUrls: true
         settings.webGLEnabled: true
         settings.accelerated2dCanvasEnabled: true
 

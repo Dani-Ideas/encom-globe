@@ -171,6 +171,64 @@
                     }, 2000);
                 }
 
+                // JSONP helper: evita bloqueo CORS en file://
+                function _ipApi(cb) {
+                    var fn = '_eg_' + Date.now();
+                    var s  = document.createElement('script');
+                    window[fn] = function(d) {
+                        delete window[fn];
+                        if (s.parentNode) s.parentNode.removeChild(s);
+                        cb(d || null);
+                    };
+                    s.src = 'https://ipapi.co/json/?callback=' + fn;
+                    s.onerror = function() {
+                        delete window[fn];
+                        if (s.parentNode) s.parentNode.removeChild(s);
+                        cb(null);
+                    };
+                    document.head.appendChild(s);
+                }
+
+                // Re-aplicar ubicación cada vez que se crea el globo
+                var _loc = null;
+                try { _loc = JSON.parse(localStorage.getItem('encom_loc')); } catch(e) {}
+                if (_loc && _loc.lat && _loc.lon) globe.addIpPin(_loc.lat, _loc.lon);
+
+                _ipApi(function(d) {
+                    if (d && d.latitude && d.longitude) {
+                        window._encomLastOnline = Date.now();
+                        localStorage.setItem('encom_loc', JSON.stringify({ lat: d.latitude, lon: d.longitude }));
+                        globe.addIpPin(d.latitude, d.longitude);
+                    }
+                });
+
+                // Revisión de conectividad: solo se inicializa una vez
+                if (!window._encomNetInit) {
+                    window._encomNetInit    = true;
+                    window._encomNoNet      = false;
+                    window._encomLastOnline = Date.now();
+                    window._encomOrigColor  = globe.baseColor;
+
+                    setInterval(function() {
+                        _ipApi(function(d) {
+                            if (d) {
+                                window._encomLastOnline = Date.now();
+                                if (window._encomNoNet && globe && globe.pointUniforms) {
+                                    window._encomNoNet = false;
+                                    globe.pointUniforms.highlightActive.value = 1.0;
+                                    globe.setBaseColor(window._encomOrigColor);
+                                }
+                            } else if (Date.now() - window._encomLastOnline > 3600000) {
+                                if (!window._encomNoNet && globe && globe.pointUniforms) {
+                                    window._encomNoNet = true;
+                                    globe.pointUniforms.highlightActive.value = 0.0;
+                                    globe.setComplementaryColor();
+                                }
+                            }
+                        });
+                    }, 3600000);
+                }
+
             }
 
             function openOptions(){
