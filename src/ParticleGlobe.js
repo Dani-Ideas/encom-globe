@@ -181,7 +181,8 @@ function ParticleGlobe(width, height, opts){
         baseColor: "#ffcc00",
         scale: 1.0,
         dayLength: 28000,
-        tilt: -0.28,
+        tilt: -0.28,          // radians around X; negative tips the north pole away (more of the south shows)
+        startLongitude: -90,  // degrees of longitude facing the viewer when the globe starts
         pointSize: 2,
         turbulence: 4,
         introDuration: 2000,  // spawn sweep + intro lines, ms (Globe's introLinesDuration)
@@ -233,7 +234,8 @@ function ParticleGlobe(width, height, opts){
 
     // Orientation, applied as Rz(roll) * Rx(pitch) * Ry(yaw). Yaw also carries the
     // automatic spin; velocities (radians/ms) give the drag some inertia on release.
-    this._yaw = Math.PI;
+    // The longitude facing the camera is 90° - yaw (see utils.mapPoint).
+    this._yaw = (90 - this.startLongitude) * Math.PI / 180;
     this._pitch = this.tilt;
     this._roll = 0;
     this._velocity = { yaw: 0, pitch: 0, roll: 0 };

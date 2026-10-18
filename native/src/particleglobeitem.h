@@ -37,6 +37,8 @@ class ParticleGlobeItem : public QQuickRhiItem
     Q_PROPERTY(qreal globeScale MEMBER m_globeScale NOTIFY settingsChanged)
     Q_PROPERTY(int dayLength MEMBER m_dayLength NOTIFY settingsChanged)
     Q_PROPERTY(qreal tilt MEMBER m_tilt NOTIFY settingsChanged)
+    // Degrees of longitude facing the viewer when the globe starts.
+    Q_PROPERTY(qreal startLongitude MEMBER m_startLongitude NOTIFY settingsChanged)
     Q_PROPERTY(qreal pointSize MEMBER m_pointSize NOTIFY settingsChanged)
     Q_PROPERTY(qreal turbulence MEMBER m_turbulence NOTIFY settingsChanged)
     // Opening like the hex globe: spawn sweep plus spinning intro lines.
@@ -124,6 +126,7 @@ private:
     qreal m_globeScale = 1.0;
     int m_dayLength = 28000;
     qreal m_tilt = -0.28;
+    qreal m_startLongitude = -90.0;
     qreal m_pointSize = 2.0;
     qreal m_turbulence = 4.0;
     int m_introDuration = 2000;
@@ -133,7 +136,7 @@ private:
     qreal m_hoverRadius = 40.0;
     qreal m_hoverPull = -0.8;
     qreal m_hoverTurbulence = 60.0;
-    bool m_interactive = true;
+    bool m_interactive = false;
     QColor m_pinColor = QColor(0x00, 0xee, 0xee);
     QColor m_markerColor = QColor(0xff, 0xcc, 0x00);
     QColor m_satelliteColor = QColor(0xff, 0x00, 0x00);

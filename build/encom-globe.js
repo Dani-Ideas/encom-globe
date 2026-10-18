@@ -58285,6 +58285,9 @@ void main() {
         scale: 1,
         dayLength: 28e3,
         tilt: -0.28,
+        // radians around X; negative tips the north pole away (more of the south shows)
+        startLongitude: -90,
+        // degrees of longitude facing the viewer when the globe starts
         pointSize: 2,
         turbulence: 4,
         introDuration: 2e3,
@@ -58339,7 +58342,7 @@ void main() {
       this._hovering = false;
       this._mouseTarget = new THREE.Vector2();
       this._mouse = new THREE.Vector2();
-      this._yaw = Math.PI;
+      this._yaw = (90 - this.startLongitude) * Math.PI / 180;
       this._pitch = this.tilt;
       this._roll = 0;
       this._velocity = { yaw: 0, pitch: 0, roll: 0 };

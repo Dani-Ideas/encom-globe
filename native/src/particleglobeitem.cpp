@@ -99,6 +99,8 @@ void ParticleGlobeItem::toggle()
 void ParticleGlobeItem::componentComplete()
 {
     QQuickRhiItem::componentComplete();
+    // The longitude facing the camera is 90° - yaw (see mapPoint).
+    m_yaw = qDegreesToRadians(90.0 - m_startLongitude);
     // As in the hex globe: pins drop in as the spawn sweep passes their longitude.
     if (m_initialPins)
         m_scene.loadInitialPins(m_introDuration, 500.0);
